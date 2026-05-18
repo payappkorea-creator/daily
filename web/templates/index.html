@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}대시보드 — 전남행복버스{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>대시보드</h4>
+  <a href="{{ url_for('schedules.new_schedule') }}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i>새 일정 등록
+  </a>
+</div>
+
+<!-- 요약 카드 -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="fs-2 fw-bold text-primary">{{ stats.total_schedules }}</div>
+        <div class="text-muted small">전체 일정</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="fs-2 fw-bold text-info">{{ stats.status_breakdown.get('예정', 0) }}</div>
+        <div class="text-muted small">예정 일정</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="fs-2 fw-bold text-success">{{ stats.status_breakdown.get('완료', 0) }}</div>
+        <div class="text-muted small">완료 일정</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center">
+        <div class="fs-2 fw-bold text-warning">{{ stats.utilization_rate }}</div>
+        <div class="text-muted small">전체 이용률</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 다가오는 일정 -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white fw-semibold">
+    <i class="bi bi-calendar-event me-1"></i>향후 30일 예정 일정
+    <span class="badge bg-primary ms-1">{{ upcoming | length }}</span>
+  </div>
+  <div class="card-body p-0">
+    {% if upcoming %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>날짜</th><th>시간</th><th>지역</th><th>장소</th>
+            <th>등록/수용</th><th>버스</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in upcoming %}
+          <tr class="schedule-row" style="cursor:pointer" onclick="location.href='{{ url_for('schedules.detail_schedule', schedule_id=s.id) }}'">
+            <td>{{ s.date }}</td>
+            <td>{{ s.time }}</td>
+            <td>{{ s.region }}</td>
+            <td>{{ s.location }}</td>
+            <td>
+              <div class="progress" style="height:6px;width:80px">
+                <div class="progress-bar bg-primary" style="width:{{ [((s.registered / s.capacity * 100) if s.capacity > 0 else 0)|int, 100]|min }}%"></div>
+              </div>
+              <small class="text-muted">{{ s.registered }}/{{ s.capacity }}</small>
+            </td>
+            <td><small>{{ s.bus_number }}</small></td>
+            <td>
+              <a href="{{ url_for('schedules.detail_schedule', schedule_id=s.id) }}" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation()">보기</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="bi bi-calendar-x fs-1"></i>
+      <p class="mt-2">향후 30일 내 예정된 일정이 없습니다.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

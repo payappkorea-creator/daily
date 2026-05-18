@@ -1,0 +1,27 @@
+body {
+  background-color: #f8f9fa;
+}
+
+.schedule-row {
+  cursor: pointer;
+}
+
+.schedule-row:hover {
+  background-color: #f0f4ff !important;
+}
+
+#calendar {
+  min-height: 600px;
+}
+
+.card {
+  border-radius: 0.75rem;
+}
+
+.navbar-brand {
+  font-size: 1.1rem;
+}
+
+.fc-event {
+  cursor: pointer;
+}

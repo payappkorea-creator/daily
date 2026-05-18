@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}{{ schedule.location }} — 전남행복버스{% endblock %}
+
+{% block content %}
+{% set color = {'예정':'primary','진행중':'warning','완료':'success','취소':'secondary'} %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <a href="{{ url_for('schedules.list_schedules') }}" class="text-decoration-none text-muted small">
+      <i class="bi bi-arrow-left me-1"></i>목록으로
+    </a>
+    <h4 class="mb-0 mt-1">
+      {{ schedule.location }}
+      <span class="badge bg-{{ color.get(schedule.status, 'secondary') }} ms-2">{{ schedule.status }}</span>
+    </h4>
+  </div>
+  <div>
+    <a href="{{ url_for('schedules.edit_schedule', schedule_id=schedule.id) }}" class="btn btn-outline-primary me-2">
+      <i class="bi bi-pencil me-1"></i>수정
+    </a>
+    <button class="btn btn-outline-danger" onclick="confirmDelete()">
+      <i class="bi bi-trash me-1"></i>삭제
+    </button>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">기본 정보</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4 text-muted">ID</dt>
+          <dd class="col-sm-8">{{ schedule.id }}</dd>
+          <dt class="col-sm-4 text-muted">날짜</dt>
+          <dd class="col-sm-8">{{ schedule.date }}</dd>
+          <dt class="col-sm-4 text-muted">시간</dt>
+          <dd class="col-sm-8">{{ schedule.time }}</dd>
+          <dt class="col-sm-4 text-muted">지역</dt>
+          <dd class="col-sm-8">{{ schedule.region }}</dd>
+          <dt class="col-sm-4 text-muted">장소</dt>
+          <dd class="col-sm-8">{{ schedule.location }}</dd>
+          <dt class="col-sm-4 text-muted">주소</dt>
+          <dd class="col-sm-8">{{ schedule.address or '—' }}</dd>
+          <dt class="col-sm-4 text-muted">버스 번호</dt>
+          <dd class="col-sm-8">{{ schedule.bus_number }}</dd>
+          <dt class="col-sm-4 text-muted">연락처</dt>
+          <dd class="col-sm-8">{{ schedule.contact or '—' }}</dd>
+          <dt class="col-sm-4 text-muted">등록일</dt>
+          <dd class="col-sm-8"><small class="text-muted">{{ schedule.created_at }}</small></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold">참가 현황</div>
+      <div class="card-body">
+        {% set pct = ((schedule.registered / schedule.capacity * 100) if schedule.capacity > 0 else 0)|int %}
+        <div class="d-flex justify-content-between mb-1">
+          <span>{{ schedule.registered }}명 / {{ schedule.capacity }}명</span>
+          <span class="fw-bold text-primary">{{ pct }}%</span>
+        </div>
+        <div class="progress" style="height:12px">
+          <div class="progress-bar bg-primary" style="width:{{ [pct, 100]|min }}%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold">제공 서비스</div>
+      <div class="card-body">
+        {% if schedule.services %}
+        {% for svc in schedule.services %}
+        <span class="badge bg-primary me-1 mb-1 fs-6">{{ svc }}</span>
+        {% endfor %}
+        {% else %}
+        <span class="text-muted">등록된 서비스 없음</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold">담당 직원</div>
+      <div class="card-body">
+        {% if schedule.staff %}
+        {% for person in schedule.staff %}
+        <span class="badge bg-secondary me-1 mb-1">{{ person }}</span>
+        {% endfor %}
+        {% else %}
+        <span class="text-muted">배정된 직원 없음</span>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if schedule.notes %}
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">비고</div>
+      <div class="card-body">{{ schedule.notes }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- 삭제 확인 모달 -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>일정 삭제</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        "{{ schedule.location }}" 일정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+        <form method="POST" action="{{ url_for('schedules.delete_schedule', schedule_id=schedule.id) }}">
+          <button type="submit" class="btn btn-danger">삭제</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete() {
+  new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

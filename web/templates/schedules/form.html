@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% set is_edit = schedule is not none %}
+{% block title %}{{ '일정 수정' if is_edit else '새 일정 등록' }} — 전남행복버스{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{{ url_for('schedules.list_schedules') }}" class="text-decoration-none text-muted small">
+    <i class="bi bi-arrow-left me-1"></i>목록으로
+  </a>
+  <h4 class="mt-1">{{ '일정 수정' if is_edit else '새 일정 등록' }}</h4>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('schedules.update_schedule', schedule_id=schedule.id) if is_edit else url_for('schedules.create_schedule') }}">
+      <div class="row g-3">
+
+        <!-- 날짜 / 시간 -->
+        <div class="col-md-3">
+          <label class="form-label">날짜 <span class="text-danger">*</span></label>
+          <input type="date" name="date" class="form-control" required
+                 value="{{ schedule.date if is_edit else '' }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">시간</label>
+          <input type="time" name="time" class="form-control"
+                 value="{{ schedule.time if is_edit else '10:00' }}">
+        </div>
+
+        <!-- 지역 / 장소 -->
+        <div class="col-md-3">
+          <label class="form-label">지역 <span class="text-danger">*</span></label>
+          <select name="region" class="form-select" required>
+            <option value="">선택하세요</option>
+            {% for r in VALID_REGIONS %}
+            <option value="{{ r }}" {% if is_edit and schedule.region == r %}selected{% endif %}>{{ r }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">장소명 <span class="text-danger">*</span></label>
+          <input type="text" name="location" class="form-control" required
+                 value="{{ schedule.location if is_edit else '' }}" placeholder="예) 보성군청 광장">
+        </div>
+
+        <!-- 주소 -->
+        <div class="col-12">
+          <label class="form-label">주소</label>
+          <input type="text" name="address" class="form-control"
+                 value="{{ schedule.address if is_edit else '' }}" placeholder="상세 주소">
+        </div>
+
+        <!-- 서비스 -->
+        <div class="col-12">
+          <label class="form-label">제공 서비스</label>
+          <div class="d-flex flex-wrap gap-3">
+            {% for svc in SERVICES_LIST %}
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="services" value="{{ svc }}" id="svc_{{ loop.index }}"
+                     {% if is_edit and svc in schedule.services %}checked{% endif %}>
+              <label class="form-check-label" for="svc_{{ loop.index }}">{{ svc }}</label>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- 직원 -->
+        <div class="col-12">
+          <label class="form-label">담당 직원</label>
+          <div class="input-group mb-2">
+            <input type="text" id="staff-input" class="form-control" placeholder="이름 입력 후 추가 버튼 클릭">
+            <button type="button" class="btn btn-outline-secondary" onclick="addStaff()">
+              <i class="bi bi-plus-lg"></i> 추가
+            </button>
+          </div>
+          <div id="staff-tags" class="d-flex flex-wrap gap-1">
+            {% if is_edit %}
+            {% for person in schedule.staff %}
+            <span class="badge bg-secondary fs-6 d-flex align-items-center gap-1">
+              {{ person }}
+              <button type="button" class="btn-close btn-close-white btn-sm" style="font-size:0.6rem" onclick="removeStaff(this, '{{ person }}')"></button>
+              <input type="hidden" name="staff" value="{{ person }}">
+            </span>
+            {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- 수용인원 / 등록인원 / 버스번호 -->
+        <div class="col-md-3">
+          <label class="form-label">수용 인원</label>
+          <input type="number" name="capacity" class="form-control" min="1"
+                 value="{{ schedule.capacity if is_edit else 50 }}">
+        </div>
+        {% if is_edit %}
+        <div class="col-md-3">
+          <label class="form-label">등록 인원</label>
+          <input type="number" name="registered" class="form-control" min="0"
+                 value="{{ schedule.registered }}">
+        </div>
+        {% endif %}
+        <div class="col-md-3">
+          <label class="form-label">버스 번호</label>
+          <input type="text" name="bus_number" class="form-control"
+                 value="{{ schedule.bus_number if is_edit else '행복버스 1호' }}">
+        </div>
+        {% if is_edit %}
+        <div class="col-md-3">
+          <label class="form-label">상태</label>
+          <select name="status" class="form-select">
+            {% for st in ['예정','진행중','완료','취소'] %}
+            <option value="{{ st }}" {% if schedule.status == st %}selected{% endif %}>{{ st }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        <!-- 연락처 / 비고 -->
+        <div class="col-md-4">
+          <label class="form-label">연락처</label>
+          <input type="text" name="contact" class="form-control"
+                 value="{{ schedule.contact if is_edit else '' }}" placeholder="061-XXX-XXXX">
+        </div>
+        <div class="col-12">
+          <label class="form-label">비고</label>
+          <textarea name="notes" class="form-control" rows="2">{{ schedule.notes if is_edit else '' }}</textarea>
+        </div>
+
+        <!-- 버튼 -->
+        <div class="col-12 d-flex gap-2">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg me-1"></i>{{ '저장하기' if is_edit else '등록하기' }}
+          </button>
+          <a href="{{ url_for('schedules.list_schedules') }}" class="btn btn-outline-secondary">취소</a>
+        </div>
+
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function addStaff() {
+  const input = document.getElementById('staff-input');
+  const name = input.value.trim();
+  if (!name) return;
+  const container = document.getElementById('staff-tags');
+  const span = document.createElement('span');
+  span.className = 'badge bg-secondary fs-6 d-flex align-items-center gap-1';
+  span.innerHTML = `${name}
+    <button type="button" class="btn-close btn-close-white btn-sm" style="font-size:0.6rem" onclick="removeStaff(this, '${name}')"></button>
+    <input type="hidden" name="staff" value="${name}">`;
+  container.appendChild(span);
+  input.value = '';
+  input.focus();
+}
+
+function removeStaff(btn, name) {
+  btn.closest('span').remove();
+}
+
+document.getElementById('staff-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); addStaff(); }
+});
+</script>
+{% endblock %}
