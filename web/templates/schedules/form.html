@@ -73,7 +73,7 @@
           <label class="form-label">담당 직원</label>
           <div class="input-group mb-2">
             <input type="text" id="staff-name" class="form-control" placeholder="이름" style="max-width:160px">
-            <input type="text" id="staff-phone" class="form-control" placeholder="전화번호 (예: 010-1234-5678)">
+            <input type="text" id="staff-phone" class="form-control" placeholder="000-0000-0000" maxlength="13" inputmode="numeric">
             <button type="button" class="btn btn-outline-secondary" onclick="addStaff()">
               <i class="bi bi-plus-lg"></i> 추가
             </button>
@@ -166,6 +166,16 @@ function addStaff() {
   nameEl.focus();
 }
 
+document.getElementById('staff-phone').addEventListener('input', function() {
+  let digits = this.value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 3) {
+    this.value = digits;
+  } else if (digits.length <= 7) {
+    this.value = digits.slice(0,3) + '-' + digits.slice(3);
+  } else {
+    this.value = digits.slice(0,3) + '-' + digits.slice(3,7) + '-' + digits.slice(7);
+  }
+});
 document.getElementById('staff-phone').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') { e.preventDefault(); addStaff(); }
 });
