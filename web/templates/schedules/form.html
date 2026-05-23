@@ -72,7 +72,8 @@
         <div class="col-12">
           <label class="form-label">담당 직원</label>
           <div class="input-group mb-2">
-            <input type="text" id="staff-input" class="form-control" placeholder="이름 입력 후 추가 버튼 클릭">
+            <input type="text" id="staff-name" class="form-control" placeholder="이름" style="max-width:160px">
+            <input type="text" id="staff-phone" class="form-control" placeholder="전화번호 (예: 010-1234-5678)">
             <button type="button" class="btn btn-outline-secondary" onclick="addStaff()">
               <i class="bi bi-plus-lg"></i> 추가
             </button>
@@ -147,26 +148,29 @@
 {% block scripts %}
 <script>
 function addStaff() {
-  const input = document.getElementById('staff-input');
-  const name = input.value.trim();
-  if (!name) return;
+  const nameEl = document.getElementById('staff-name');
+  const phoneEl = document.getElementById('staff-phone');
+  const name = nameEl.value.trim();
+  const phone = phoneEl.value.trim();
+  if (!name) { nameEl.focus(); return; }
+  const value = phone ? `${name} (${phone})` : name;
   const container = document.getElementById('staff-tags');
   const span = document.createElement('span');
   span.className = 'badge bg-secondary fs-6 d-flex align-items-center gap-1';
-  span.innerHTML = `${name}
-    <button type="button" class="btn-close btn-close-white btn-sm" style="font-size:0.6rem" onclick="removeStaff(this, '${name}')"></button>
-    <input type="hidden" name="staff" value="${name}">`;
+  span.innerHTML = `<i class="bi bi-person-fill me-1"></i>${value}
+    <button type="button" class="btn-close btn-close-white btn-sm" style="font-size:0.6rem" onclick="this.closest('span').remove()"></button>
+    <input type="hidden" name="staff" value="${value}">`;
   container.appendChild(span);
-  input.value = '';
-  input.focus();
+  nameEl.value = '';
+  phoneEl.value = '';
+  nameEl.focus();
 }
 
-function removeStaff(btn, name) {
-  btn.closest('span').remove();
-}
-
-document.getElementById('staff-input').addEventListener('keydown', function(e) {
+document.getElementById('staff-phone').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') { e.preventDefault(); addStaff(); }
+});
+document.getElementById('staff-name').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('staff-phone').focus(); }
 });
 </script>
 {% endblock %}
